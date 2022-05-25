@@ -1,6 +1,8 @@
+//Declaration for mongoose
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+//This is a schema to create the structure to recive the email, password, name and status for a user.
 const userSchema = new Schema({
   email: {
     type: String,

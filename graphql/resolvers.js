@@ -1,9 +1,14 @@
+// bcrypt encripts the user's password
 const bcrypt = require("bcryptjs");
+//This helps validate names and password.
 const validator = require("validator");
+//jwt is use to create a token for the user to login with.
 const jwt = require("jsonwebtoken");
+//Imports the model for the users.
 const User = require("../models/user");
 
 module.exports = {
+  //Method to create the users.
   createUser: async function ({ userInput }, req) {
     const errors = [];
     if (!validator.isEmail(userInput.email)) {
@@ -36,6 +41,7 @@ module.exports = {
     return { ...createdUser._doc, _id: createdUser._id.toString() };
   },
 
+  //Method to log the users in.
   login: async function ({ email, password }) {
     const user = await User.findOne({ email: email });
     if (!user) {

@@ -1,29 +1,40 @@
 const express = require("express");
+//this allows to server to collect information from the parameters correctly
 const bodyParser = require("body-parser");
 
+//I use mongoose to connect to the mongoDB database
 const mongoose = require("mongoose");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
 
+//The express-graphql module provides a simple way to create an Express server that runs a GraphQL API.
 const graphqlHttp = require("express-graphql");
 
+//The graphQl schema
 const graphqlSchema = require("./graphql/schema");
+//The graphQl resolver
 const graphqlResolver = require("./graphql/resolvers");
+//The middleware used to access the database.
 const auth = require("./middleware/auth");
 
-const MONGODB_URL = `mongodb+srv://nico_admin:byu123@cluster0.cukyk.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+//The URI to connect to the database in mongoDB.
+const MONGODB_URI = `mongodb+srv://nico_admin:byu123@cluster0.cukyk.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 
+//This runs the express app.
 const app = express();
 
+//A configuration for MongoDBStore.
 const store = new MongoDBStore({
-  uri: MONGODB_URL,
+  uri: MONGODB_URI,
   collection: "sessions",
 });
 
 const PORT = 9000;
 
+//cors allows cross and same origin connections.
 const cors = require("cors");
 
+//A configuration for cors that allows the port 3000 to connect to the server.
 const corsOptions = {
   origin: "http://localhost:3000",
   optionsSuccessStatus: 200,
@@ -48,6 +59,7 @@ app.use(
 
 app.use(auth);
 
+//This makes possible to do queries to graphql interface.
 app.use(
   "/graphql",
   graphqlHttp({
@@ -74,8 +86,9 @@ app.use((error, req, res, next) => {
   res.status(status).json({ message: message, data: data });
 });
 
+//This connects to the database in mongoDB.
 mongoose
-  .connect(MONGODB_URL, options)
+  .connect(MONGODB_URI, options)
   .then((result) => {
     app.listen(PORT);
   })
