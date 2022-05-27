@@ -1,95 +1,44 @@
+//I use dotenv to access credentials to connect to the port and database.
+require("dotenv").config();
+
+//I use Express as the backend framework.
 const express = require("express");
-//this allows to server to collect information from the parameters correctly
-const bodyParser = require("body-parser");
 
-//I use mongoose to connect to the mongoDB database
-const mongoose = require("mongoose");
-const session = require("express-session");
-const MongoDBStore = require("connect-mongodb-session")(session);
+//I use ApolloServer to connect to the express server using graphql.
+const { ApolloServer } = require("apollo-server-express");
 
-//The express-graphql module provides a simple way to create an Express server that runs a GraphQL API.
-const graphqlHttp = require("express-graphql");
+//This are the typeDefs of Apollo similar to schemas.
+const { typeDefs } = require("./apollo-graphql/typeDefs");
 
-//The graphQl schema
-const graphqlSchema = require("./graphql/schema");
-//The graphQl resolver
-const graphqlResolver = require("./graphql/resolvers");
-//The middleware used to access the database.
-const auth = require("./middleware/auth");
+//The resolvers are the method use to make the queries.
+const { resolvers } = require("./apollo-graphql/resolvers");
 
-//The URI to connect to the database in mongoDB.
-const MONGODB_URI = `mongodb+srv://nico_admin:byu123@cluster0.cukyk.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+//I connect to the database en mongoDB using mongoose.
+const { connectDB } = require("./db");
 
-//This runs the express app.
 const app = express();
+connectDB();
 
-//A configuration for MongoDBStore.
-const store = new MongoDBStore({
-  uri: MONGODB_URI,
-  collection: "sessions",
-});
+app.get("/", (req, res) => res.send(" Welcome to my api "));
 
-const PORT = 9000;
+module.exports = app;
 
-//cors allows cross and same origin connections.
-const cors = require("cors");
+// A basic function to start ApolloServer
+async function start() {
+  const apolloServer = new ApolloServer({
+    typeDefs,
+    resolvers,
+  });
 
-//A configuration for cors that allows the port 3000 to connect to the server.
-const corsOptions = {
-  origin: "http://localhost:3000",
-  optionsSuccessStatus: 200,
-};
+  await apolloServer.start();
 
-app.use(cors(corsOptions));
+  apolloServer.applyMiddleware({ app });
 
-const options = {
-  family: 4,
-};
+  app.use("*", (req, res) => res.status(404).send(" Not found "));
 
-app.use(bodyParser.json());
+  app.listen(process.env.PORT, () => {
+    console.log("Runing");
+  });
+}
 
-app.use(
-  session({
-    secret: "my secret",
-    resave: false,
-    saveUninitialized: false,
-    store: store,
-  })
-);
-
-app.use(auth);
-
-//This makes possible to do queries to graphql interface.
-app.use(
-  "/graphql",
-  graphqlHttp({
-    schema: graphqlSchema,
-    rootValue: graphqlResolver,
-    graphiql: true,
-    formatError(err) {
-      if (!err.originalError) {
-        return err;
-      }
-      const data = err.originalError.data;
-      const message = err.message || "An error occurred.";
-      const code = err.originalError.code || 500;
-      return { message: message, status: code, data: data };
-    },
-  })
-);
-
-app.use((error, req, res, next) => {
-  console.log(error);
-  const status = error.statusCode || 500;
-  const message = error.message;
-  const data = error.data;
-  res.status(status).json({ message: message, data: data });
-});
-
-//This connects to the database in mongoDB.
-mongoose
-  .connect(MONGODB_URI, options)
-  .then((result) => {
-    app.listen(PORT);
-  })
-  .catch((err) => console.log(err));
+start();

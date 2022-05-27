@@ -1,8 +1,6 @@
-//Declaration for mongoose
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
-
 //This is a schema to create the structure to recive the email, password, name and status for a user.
+const { Schema, model } = require("mongoose");
+
 const userSchema = new Schema({
   email: {
     type: String,
@@ -16,10 +14,7 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
-  status: {
-    type: String,
-    default: "I am new!",
-  },
 });
 
-module.exports = mongoose.model("User", userSchema);
+//Declaration for mongoose
+module.exports = model("User", userSchema);
